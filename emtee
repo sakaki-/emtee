@@ -672,7 +672,7 @@ filter_package_list() {
         # related to Portage masks per se
         ALL_BUILD[${I}]=0
         ALL_MASK[${I}]=0
-        if [[ "uninstall" == "ALL_EMTYPE[${I}]" || "blocks" == "ALL_EMTYPE[${I}]" ]]; then
+        if [[ "uninstall" == "${ALL_EMTYPE[${I}]}" || "blocks" == "${ALL_EMTYPE[${I}]}" ]]; then
             # blocks and uninstalls will be dealt with by final emerge step
             # we mask these, so they can never be flagged as
             # candidate FQAs
