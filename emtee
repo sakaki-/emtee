@@ -52,7 +52,7 @@
 #    and --newuse.
 #
 #    Of course, the issue is that in addition to new versions ([N]),
-#    package upgrades ([U]), downgrades ([UD]), slot changes ([NS])
+#    package upgrades ([U]), downgrades ([UD]), new slots ([NS])
 #    blocks and uninstalls, such a list will generally also contain a
 #    huge number of reinstalls ([R]). Some of these will genuinely
 #    need doing (in light of changed USE flags etc.), but many,
@@ -82,9 +82,9 @@
 #    small).  Yet, if the other claims above are correct, the
 #    resulting merge lists for both approaches will be
 #    identical. Furthermore, this 'real' --oneshot emerge will still
-#    deal with triggered slot change rebuilds for us, and (subject to
-#    EMERGE_DEFAULT_OPTS) allow the scheduled builds to be fully
-#    parallelized.
+#    deal with triggered slot change rebuilds and soft block
+#    uninstalls for us, and (subject to EMERGE_DEFAULT_OPTS) allow the
+#    scheduled builds to be fully parallelized.
 #
 # ALGORITHM
 # ---------
@@ -142,7 +142,7 @@
 #    times, do *not* pass -s/-S.)
 #
 # 4. Invoke the 'real' emerge, as:
-#      emerge --oneshot [opts] <filtered-build-list-from-phase-2>
+#      emerge --oneshot [opts] <filtered-FQA-build-list-from-phase-2>
 #    (Note that additional opts may be passed to this invocation,
 #    both explicitly (via -E/--emerge-args) and implicitly, via one of
 #    the impacting options (-v/--verbose, -a/--ask, -A/--alert, or
@@ -193,7 +193,7 @@
 # AUTHOR
 # ------
 #
-# Copyright (c) 2018 sakaki <sakaki@deciban.com>
+# Copyright (c) 2018-2019 sakaki <sakaki@deciban.com>
 #
 # License (GPL v3.0)
 # ------------------
@@ -592,7 +592,7 @@ compute_emptytree_package_list() {
         # Portage's naming rules have been followed
         if [[ "${NEXTLINE}" =~ ^\[([^[:blank:]]+)([^\]#\*~]+)[#\*~]*\][[:blank:]]+([^/]+)/(([0-9A-Za-z_+\-]+)-((([0-9.]+[0-9A-Za-z]?)(((_alpha|_beta|_pre|_rc|_p)[0-9]*)*))(-r[^:]+)?)):?([^:/]+)?/?([^:]+)?::([^[:blank:]]+)[[:blank:]]+(.*)$ ]]; then
             ALL_EMTYPE[${NUM_ATOMS}]="${BASH_REMATCH[1]}"
-            ALL_EMFLAGS[${NUM_ATOMS}]="${BASH_REMATCH[2]//[[:blank:]]/}" # drop all spaces, masks flags already dropped
+            ALL_EMFLAGS[${NUM_ATOMS}]="${BASH_REMATCH[2]//[[:blank:]]/}" # drop all spaces
             ALL_CATEGORY[${NUM_ATOMS}]="${BASH_REMATCH[3]}"
             ALL_PN[${NUM_ATOMS}]="${BASH_REMATCH[5]}"
             ALL_PF[${NUM_ATOMS}]="${BASH_REMATCH[4]}"
@@ -648,7 +648,7 @@ compute_emptytree_package_list() {
         show "The unfiltered list of packages is as follows:"
         local -i I
         for ((I=0;I<NUM_ATOMS;I++)); do
-            echo "  [${ALL_EMFLAGS[${I}]}] ${ALL_FQA[${I}]}:${ALL_SLOT[${I}]}::${ALL_REPO[${I}]} ${ALL_CURR_FQA[${I}]}${ALL_CURR_SLOT[${I}]:+:}${ALL_CURR_SLOT[${I}]}${ALL_CURR_REPO[${I}]:+::}${ALL_CURR_REPO[${I}]}"
+            echo "  [${ALL_EMTYPE[${I}]} ${ALL_EMFLAGS[${I}]}] ${ALL_FQA[${I}]}:${ALL_SLOT[${I}]}::${ALL_REPO[${I}]} ${ALL_CURR_FQA[${I}]}${ALL_CURR_SLOT[${I}]:+:}${ALL_CURR_SLOT[${I}]}${ALL_CURR_REPO[${I}]:+::}${ALL_CURR_REPO[${I}]}"
         done
     fi
     show "There are $((NUM_ATOMS)) packages specified by the ${TARGETSET} --emptytree emerge"
@@ -693,7 +693,7 @@ filter_package_list() {
         show "The filtered list of packages, after the first pass, is as follows:"
         for ((I=0;I<NUM_ATOMS;I++)); do
             if ((ALL_BUILD[${I}]==1)); then
-                echo "  [${ALL_EMFLAGS[${I}]}] ${ALL_FQA[${I}]}:${ALL_SLOT[${I}]}::${ALL_REPO[${I}]} ${ALL_CURR_FQA[${I}]}${ALL_CURR_SLOT[${I}]:+:}${ALL_CURR_SLOT[${I}]}${ALL_CURR_REPO[${I}]:+::}${ALL_CURR_REPO[${I}]}"
+                echo "  [${ALL_EMTYPE[${I}]} ${ALL_EMFLAGS[${I}]}] ${ALL_FQA[${I}]}:${ALL_SLOT[${I}]}::${ALL_REPO[${I}]} ${ALL_CURR_FQA[${I}]}${ALL_CURR_SLOT[${I}]:+:}${ALL_CURR_SLOT[${I}]}${ALL_CURR_REPO[${I}]:+::}${ALL_CURR_REPO[${I}]}"
             fi
         done
     fi
@@ -742,7 +742,7 @@ filter_package_list() {
         show "The filtered list of packages, after the second pass, is as follows:"
         for ((I=0;I<NUM_ATOMS;I++)); do
             if ((ALL_BUILD[${I}]==1)); then
-                echo "  [${ALL_EMFLAGS[${I}]}] ${ALL_FQA[${I}]}:${ALL_SLOT[${I}]}::${ALL_REPO[${I}]} ${ALL_CURR_FQA[${I}]}${ALL_CURR_SLOT[${I}]:+:}${ALL_CURR_SLOT[${I}]}${ALL_CURR_REPO[${I}]:+::}${ALL_CURR_REPO[${I}]}"
+                echo "  [${ALL_EMTYPE[${I}]} ${ALL_EMFLAGS[${I}]}] ${ALL_FQA[${I}]}:${ALL_SLOT[${I}]}::${ALL_REPO[${I}]} ${ALL_CURR_FQA[${I}]}${ALL_CURR_SLOT[${I}]:+:}${ALL_CURR_SLOT[${I}]}${ALL_CURR_REPO[${I}]:+::}${ALL_CURR_REPO[${I}]}"
             fi
         done
     fi
