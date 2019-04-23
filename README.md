@@ -1,4 +1,4 @@
-EMTEE 1 "Version 1.0.0: Jan 2019"
+EMTEE 1 "Version 1.0.1: Apr 2019"
 =================================
 
 [//]: # ( Convert to manpage using e.g. go-md2man -in=README.md -out=emtee.1 )
@@ -79,7 +79,7 @@ OPTIONS
   list. Note that these arguments are *not* passed to the real
   `emerge` step; you need to use `-E` for that.
 
-`-E`, `==emerge-args=`*ADDITIONAL_ARGS*
+`-E`, `--emerge-args=`*ADDITIONAL_ARGS*
   Passes the specified arguments to the real `emerge` step. Note that
   these arguments are *not* passed to the preliminary `emerge` step; you
   need to use `-e` for that.  
