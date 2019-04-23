@@ -1,4 +1,4 @@
-EMTEE 1 "Version 1.0.1: Apr 2019"
+EMTEE 1 "Version 1.0.2: Apr 2019"
 =================================
 
 [//]: # ( Convert to manpage using e.g. go-md2man -in=README.md -out=emtee.1 )
