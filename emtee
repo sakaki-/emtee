@@ -219,7 +219,7 @@ set -o pipefail
 # ********************** variables ********************* 
 
 PROGNAME="$(basename "${0}")"
-VERSION="1.0.2"
+VERSION="1.0.3"
 
 RED_TEXT="" GREEN_TEXT="" YELLOW_TEXT="" RESET_ATTS="" ALERT_TEXT=""
 if [[ -v TERM && -n "${TERM}" && "${TERM}" != "dumb" ]]; then
@@ -285,9 +285,11 @@ declare -i ARG_ASK=0 ARG_ALERT=0 ARG_HELP=0 ARG_VERSION=0
 declare -i ARG_VERBOSE=0 ARG_NEWUSE=0 ARG_PRETEND=0
 declare -i ARG_DEBUG=0 ARG_CROSSCHECK=0 ARG_STRICT_CROSSCHECK=0
 declare -i ARG_WITH_BDEPS=1 # defaults ON
+declare -i ARG_KEEP_GOING=1 # defaults ON
 declare -i ARG_FORCE_SLOT_REBUILDS=0
 
 BDEPS_FLAG=y
+KEEP_GOING_FLAG=y
 
 # force TERM if none found (e.g. when running from cron)
 if ! tty -s; then
@@ -465,6 +467,10 @@ Options:
                         automatically anyway
   -v, --verbose         ask called programs to display more information
   -V, --version         display the version number of ${PROGNAME} and exit
+  -z, --keep-going=y|n  whether or not to continue the 'real' emerge phase as
+                        much as possible after an error; NB defaults to y
+                        if unspecified, in contrast to emerge's default
+                        behaviour
 EOF
 }
 print_help() {
@@ -497,7 +503,7 @@ process_command_line_options() {
     set +e
         # error trapping temporarily off while we parse
         # so we can handle issues ourselves
-        TEMP="$(getopt -o aAb:cCde:E:hpNs:SvV --long ask,alert,with-bdeps:,crosscheck,strict-crosscheck,debug,emptytree-emerge-args:,emerge-args:,help,pretend,newuse,set:,force-slot-rebuilds,verbose,version -n "${PROGNAME}" -- "${@}")"
+        TEMP="$(getopt -o aAb:cCde:E:hpNs:SvVz: --long ask,alert,with-bdeps:,crosscheck,strict-crosscheck,debug,emptytree-emerge-args:,emerge-args:,help,pretend,newuse,set:,force-slot-rebuilds,verbose,version,keep-going: -n "${PROGNAME}" -- "${@}")"
         RC="${?}"
     set -e
     if ((RC!=0)); then
@@ -539,12 +545,20 @@ process_command_line_options() {
             -S|--force-slot-rebuilds) ARG_FORCE_SLOT_REBUILDS=1 ; shift ;;
             -v|--verbose) ARG_VERBOSE=1 ; shift ;;
             -V|--version) ARG_VERSION=1 ; shift ;;
+            -z|--keep-going)
+                case "${2}" in
+                    "") ARG_KEEP_GOING=1; shift 2 ;;
+                    *) [[ "${2,,}" =~ n ]] && ARG_KEEP_GOING=0 || ARG_KEEP_GOING=1 ; shift 2 ;;
+                esac ;;
             --) shift ; break ;;
             *) die "Internal error!" ;;
         esac
     done
     if ((ARG_WITH_BDEPS==0)); then
         BDEPS_FLAG="n"
+    fi
+    if ((ARG_KEEP_GOING==0)); then
+        KEEP_GOING_FLAG="n"
     fi
     # process 'perform-then-exit' options
     if ((ARG_HELP==1)); then
@@ -585,7 +599,7 @@ compute_emptytree_package_list() {
     show "  emerge --with-bdeps=${BDEPS_FLAG} --pretend --emptytree --verbose ${ETEMERGEARGS}${ETEMERGEARGS:+ }${TARGETSET}"
     show "Please wait..."
     # cache output in a variable...
-    EMPTYTREE_OUTPUT="$(emerge --with-bdeps=y --pretend --emptytree --verbose ${ETEMERGEARGS} ${TARGETSET})"
+    EMPTYTREE_OUTPUT="$(emerge --with-bdeps=${BDEPS_FLAG} --pretend --emptytree --verbose ${ETEMERGEARGS} ${TARGETSET})"
     # ...and parse each line from it, using a regex
     while read -r NEXTLINE; do
         # following regex isn't meant to enforce syntax - assume
@@ -962,10 +976,10 @@ perform_itemized_emerge() {
     if ((NUM_TO_BUILD>0)); then
         if ((ARG_DEBUG==1)); then
             show "Issuing:"
-            echo "  emerge --oneshot ${ASKFLAG} ${ALERTFLAG} ${VERBOSITYFLAG} ${PRETENDFLAG} ${EMERGEARGS} ${BUILD_FQAS}"
+            echo "  emerge --oneshot ${ASKFLAG} ${ALERTFLAG} ${VERBOSITYFLAG} ${PRETENDFLAG} --keep-going=${KEEP_GOING_FLAG} ${EMERGEARGS} ${BUILD_FQAS}"
         fi
         emerge --oneshot ${ASKFLAG} ${ALERTFLAG} ${VERBOSITYFLAG} ${PRETENDFLAG} \
-               ${EMERGEARGS} ${BUILD_FQAS}
+               --keep-going=${KEEP_GOING_FLAG} ${EMERGEARGS} ${BUILD_FQAS}
     else
         show "Nothing to emerge!"
     fi

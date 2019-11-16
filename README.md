@@ -1,4 +1,4 @@
-EMTEE 1 "Version 1.0.2: Apr 2019"
+EMTEE 1 "Version 1.0.3: Nov 2019"
 =================================
 
 [//]: # ( Convert to manpage using e.g. go-md2man -in=README.md -out=emtee.1 )
@@ -12,7 +12,7 @@ SYNOPSIS
 --------
 
 `emtee` [`-a`] [`-A`] [`-b`] [`-c`] [`-C`] [`-d`] [`-e` args] [`-E` args]
-[`-h`] [`-p`] [`-N`] [`-s` set] [`-S`] [`-v`] [`-V`]
+[`-h`] [`-p`] [`-N`] [`-s` set] [`-S`] [`-v`] [`-V`] [`-z`]
 
 DESCRIPTION
 -----------
@@ -25,8 +25,8 @@ is deployed).
 
 It may be used (with appropriate options) in place of:
 
-* `emerge --with-bdeps=y --deep --update --changed-use` *@world*,
-* `emerge --with-bdeps=y --deep --update --newuse --ask --verbose` *@world*;
+* `emerge --with-bdeps=y --deep --update --changed-use --keep-going` *@world*,
+* `emerge --with-bdeps=y --deep --update --newuse --ask --verbose --keep-going` *@world*;
 
 and similar invocations.
 
@@ -117,6 +117,12 @@ OPTIONS
 `-V-`, `--version`
   Prints `emtee`'s version number, and exits.
 
+`-z`, `--keep-going=y|n`
+  Specifies whether or not to try to build as much as possible during
+  the main `emerge` phase, restarting should errors occur. NB,
+  defaults to `y` if unspecified, in contrast to `emerge`'s default
+  behaviour.
+
 ALGORITHM
 ---------
 
@@ -176,7 +182,7 @@ The `emtee` process runs as follows:
    Note that additional arguments may be passed to this invocation, both
    explicitly (via `-E`/`--emerge-args`) and implicitly, via one of
    the impacting options (`-v`/`--verbose`, `-a`/`--ask`,
-   `-A`/`--alert`, or `-p`/`--pretend`).
+   `-A`/`--alert`, `-p`/`--pretend` or `-z`/`--keep-going`).
 
 BASIS
 -----

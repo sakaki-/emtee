@@ -1,4 +1,4 @@
-.TH EMTEE 1 "Version 1.0.2: Apr 2019"
+.TH EMTEE 1 "Version 1.0.3: Nov 2019"
 .SH NAME
 .PP
 emtee \- a faster\-startup emerge \-DuU \-\-with\-bdeps=y @world (et al.)
@@ -6,7 +6,7 @@ emtee \- a faster\-startup emerge \-DuU \-\-with\-bdeps=y @world (et al.)
 .SH SYNOPSIS
 .PP
 \fB\fCemtee\fR [\fB\fC\-a\fR] [\fB\fC\-A\fR] [\fB\fC\-b\fR] [\fB\fC\-c\fR] [\fB\fC\-C\fR] [\fB\fC\-d\fR] [\fB\fC\-e\fR args] [\fB\fC\-E\fR args]
-[\fB\fC\-h\fR] [\fB\fC\-p\fR] [\fB\fC\-N\fR] [\fB\fC\-s\fR set] [\fB\fC\-S\fR] [\fB\fC\-v\fR] [\fB\fC\-V\fR]
+[\fB\fC\-h\fR] [\fB\fC\-p\fR] [\fB\fC\-N\fR] [\fB\fC\-s\fR set] [\fB\fC\-S\fR] [\fB\fC\-v\fR] [\fB\fC\-V\fR] [\fB\fC\-z\fR]
 
 .SH DESCRIPTION
 .PP
@@ -21,9 +21,9 @@ It may be used (with appropriate options) in place of:
 
 .RS
 .IP \(bu 2
-\fB\fCemerge \-\-with\-bdeps=y \-\-deep \-\-update \-\-changed\-use\fR \fI@world\fP,
+\fB\fCemerge \-\-with\-bdeps=y \-\-deep \-\-update \-\-changed\-use \-\-keep\-going\fR \fI@world\fP,
 .IP \(bu 2
-\fB\fCemerge \-\-with\-bdeps=y \-\-deep \-\-update \-\-newuse \-\-ask \-\-verbose\fR \fI@world\fP;
+\fB\fCemerge \-\-with\-bdeps=y \-\-deep \-\-update \-\-newuse \-\-ask \-\-verbose \-\-keep\-going\fR \fI@world\fP;
 
 .RE
 
@@ -93,7 +93,7 @@ block\-driven unmerges.
   \fB\fCemerge\fR step; you need to use \fB\fC\-E\fR for that.
 
 .PP
-\fB\fC\-E\fR, \fB\fC--emerge\-args=\fR\fIADDITIONAL\_ARGS\fP
+\fB\fC\-E\fR, \fB\fC\-\-emerge\-args=\fR\fIADDITIONAL\_ARGS\fP
   Passes the specified arguments to the real \fB\fCemerge\fR step. Note that
   these arguments are \fInot\fP passed to the preliminary \fB\fCemerge\fR step; you
   need to use \fB\fC\-e\fR for that.
@@ -139,6 +139,13 @@ block\-driven unmerges.
 .PP
 \fB\fC\-V\-\fR, \fB\fC\-\-version\fR
   Prints \fB\fCemtee\fR\&'s version number, and exits.
+
+.PP
+\fB\fC\-z\fR, \fB\fC\-\-keep\-going=y|n\fR
+  Specifies whether or not to try to build as much as possible during
+  the main \fB\fCemerge\fR phase, restarting should errors occur. NB,
+  defaults to \fB\fCy\fR if unspecified, in contrast to \fB\fCemerge\fR\&'s default
+  behaviour.
 
 .SH ALGORITHM
 .PP
@@ -218,7 +225,7 @@ Invoke the real \fB\fCemerge\fR, as: \fB\fCemerge \-\-oneshot [opts]\fR
 Note that additional arguments may be passed to this invocation, both
 explicitly (via \fB\fC\-E\fR/\fB\fC\-\-emerge\-args\fR) and implicitly, via one of
 the impacting options (\fB\fC\-v\fR/\fB\fC\-\-verbose\fR, \fB\fC\-a\fR/\fB\fC\-\-ask\fR,
-\fB\fC\-A\fR/\fB\fC\-\-alert\fR, or \fB\fC\-p\fR/\fB\fC\-\-pretend\fR).
+\fB\fC\-A\fR/\fB\fC\-\-alert\fR, \fB\fC\-p\fR/\fB\fC\-\-pretend\fR or \fB\fC\-z\fR/\fB\fC\-\-keep\-going\fR).
 
 .RE
 
