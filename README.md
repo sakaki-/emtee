@@ -6,7 +6,7 @@ EMTEE 1 "Version 1.0.3: Nov 2019"
 NAME
 ----
 
-emtee - a faster-startup emerge -DuU --with-bdeps=y @world (et al.)
+emtee - a faster-startup emerge -DuU --with-bdeps=y --keep-going @world (et al.)
 
 SYNOPSIS
 --------
