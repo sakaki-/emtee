@@ -25,8 +25,8 @@ is deployed).
 
 It may be used (with appropriate options) in place of:
 
-* `emerge --with-bdeps=y --deep --update --changed-use --keep-going` *@world*,
-* `emerge --with-bdeps=y --deep --update --newuse --ask --verbose --keep-going` *@world*;
+* `emerge --with-bdeps=y --deep --update --changed-use --keep-going @world`,
+* `emerge --with-bdeps=y --deep --update --newuse --ask --verbose --keep-going @world`;
 
 and similar invocations.
 
@@ -150,7 +150,7 @@ The `emtee` process runs as follows:
      * Then (pass 3), if `-S`/`--force-slot-rebuilds` is in use, for
        each marked package on the list whose slot or subslot is
        changing (also inferable from the phase 1 output), search
-       */var/db/pkg/<FQA>/RDEPENDS* (and *DEPENDS*, if
+       */var/db/pkg/FQA/RDEPENDS* (and *DEPENDS*, if
        `--with-bdeps=y`, the default, is active) for any matching slot
        dependencies.  Mark each such located (reverse) dependency that
        is *also* on the original `--emptytree` list (and not a block
@@ -165,7 +165,7 @@ The `emtee` process runs as follows:
    --pretend --deep --update [--changed-use|--newuse] [opts]` *@world*
    (adapted for specified options appropriately), with that produced
    by invoking `emerge --oneshot --pretend [opts]`
-   *<filtered-FQA-build-list-from-phase-2>*. If any differences are
+   *filtered-FQA-build-list-from-phase-2*. If any differences are
    found, report them (and, additionally, stop the build in such a
    case, if `-S`/`--strict-crosscheck` specified). Also report
    a series of comparative (total elapsed wall-clock) timings for both
@@ -177,7 +177,7 @@ The `emtee` process runs as follows:
    *and* the newer, `--emptytree`-based approach)! So, if your goal is
    to improve emerge times, do *not* pass `-s`/`-S`.
 4. Invoke the real `emerge`, as: `emerge --oneshot [opts]`
-   *<filtered-FQA-build-list-from-phase-2>*.  
+   *filtered-FQA-build-list-from-phase-2*.  
 &nbsp;  
    Note that additional arguments may be passed to this invocation, both
    explicitly (via `-E`/`--emerge-args`) and implicitly, via one of
