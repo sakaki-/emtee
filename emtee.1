@@ -1,11 +1,12 @@
-.TH EMTEE 1 "Version 1.0.3: Nov 2019"
+.nh
+.TH EMTEE 1 "Version 1.0.4: Apr 2020"
 .SH NAME
 .PP
-emtee \- a faster\-startup emerge \-DuU \-\-with\-bdeps=y @world (et al.)
+emtee \- a faster\-startup emerge \-DuU \-\-with\-bdeps=y \-\-keep\-going @world (et al.)
 
 .SH SYNOPSIS
 .PP
-\fB\fCemtee\fR [\fB\fC\-a\fR] [\fB\fC\-A\fR] [\fB\fC\-b\fR] [\fB\fC\-c\fR] [\fB\fC\-C\fR] [\fB\fC\-d\fR] [\fB\fC\-e\fR args] [\fB\fC\-E\fR args]
+\fB\fCemtee\fR [\fB\fC\-a\fR] [\fB\fC\-A\fR] [\fB\fC\-b\fR] [\fB\fC\-c\fR] [\fB\fC\-C\fR] [\fB\fC\-d\fR] [\fB\fC\-e\fR args] [\fB\fC\-E\fR args] [\fB\fC\-f\fR NUM]
 [\fB\fC\-h\fR] [\fB\fC\-p\fR] [\fB\fC\-N\fR] [\fB\fC\-s\fR set] [\fB\fC\-S\fR] [\fB\fC\-v\fR] [\fB\fC\-V\fR] [\fB\fC\-z\fR]
 
 .SH DESCRIPTION
@@ -21,9 +22,9 @@ It may be used (with appropriate options) in place of:
 
 .RS
 .IP \(bu 2
-\fB\fCemerge \-\-with\-bdeps=y \-\-deep \-\-update \-\-changed\-use \-\-keep\-going\fR \fI@world\fP,
+\fB\fCemerge \-\-with\-bdeps=y \-\-deep \-\-update \-\-changed\-use \-\-keep\-going @world\fR,
 .IP \(bu 2
-\fB\fCemerge \-\-with\-bdeps=y \-\-deep \-\-update \-\-newuse \-\-ask \-\-verbose \-\-keep\-going\fR \fI@world\fP;
+\fB\fCemerge \-\-with\-bdeps=y \-\-deep \-\-update \-\-newuse \-\-ask \-\-verbose \-\-keep\-going @world\fR;
 
 .RE
 
@@ -98,11 +99,26 @@ block\-driven unmerges.
   these arguments are \fInot\fP passed to the preliminary \fB\fCemerge\fR step; you
   need to use \fB\fC\-e\fR for that.
 .br
- 
+
 .br
   Note also that you can achieve the effect of the \fB\fC\-a\fR \fB\fC\-A\fR, \fB\fC\-p\fR and \fB\fC\-v\fR
   options by setting them directly via \fB\fC\-E\fR, if you prefer. They are
   provided as syntactic sugar, for convenience.
+
+.PP
+\fB\fC\-f\fR, \fB\fC\-\-full\-build\-fallback\-threshold=\fR\fINUM\fP
+  If the number of packages passed to the real emerge step
+  is >= \fINUM\fP, then a dry\-run will first be performed, to check that
+  the proposed set can be emerged consistently, and iff that
+  fails, then a full \fB\fCemerge \-\-emptytree @world\fR
+  run will be initiated, followed by (if successful)
+  \fB\fCemerge \-\-depclean\fR\&.
+.br
+
+.br
+  This functionality is provided as a fallback, to ensure that
+  fundamental changes that trigger many dependencies can be built
+  consistently. The default is \fBnot\fP to do this dry\-run test.
 
 .PP
 \fB\fC\-h\fR, \fB\fC\-\-help\fR
@@ -166,7 +182,7 @@ Filter this list, by marking each fully\-qualified atom
 (\fIFQA\fP=\fI$CATEGORY/$PF\fP) within it for building (or not). Begin
 with all \fIFQAs\fP unmarked.
 .br
- 
+\&nbsp;
 .br
 
 .RS
@@ -183,13 +199,13 @@ information to allow us to easily work this out).
 Then (pass 3), if \fB\fC\-S\fR/\fB\fC\-\-force\-slot\-rebuilds\fR is in use, for
 each marked package on the list whose slot or subslot is
 changing (also inferable from the phase 1 output), search
-\fI/var/db/pkg/<FQA>/RDEPENDS\fP (and \fIDEPENDS\fP, if
+\fI/var/db/pkg/FQA/RDEPENDS\fP (and \fIDEPENDS\fP, if
 \fB\fC\-\-with\-bdeps=y\fR, the default, is active) for any matching slot
 dependencies.  Mark each such located (reverse) dependency that
 is \fIalso\fP on the original \fB\fC\-\-emptytree\fR list (and not a block
 or uninstall) for build.
 .br
- 
+\&nbsp;
 .br
 Note that pass 3 is skipped by default, since the phase 4 emerge
 (aka the real \fB\fCemerge\fR) will automatically trigger any
@@ -197,19 +213,20 @@ necessary slot rebuilds anyway, so it is redundant except for in a
 few esoteric situations.
 
 .RE
+
 .IP "  3." 5
 Iff \fB\fC\-c\fR/\fB\fC\-\-crosscheck\fR (or \fB\fC\-C\fR/\fB\fC\-\-strict\-crosscheck\fR) passed,
 compare the \fIFQA\fP build list produced by invoking \fB\fCemerge \-\-bdeps=y
 \-\-pretend \-\-deep \-\-update [\-\-changed\-use|\-\-newuse] [opts]\fR \fI@world\fP
 (adapted for specified options appropriately), with that produced
 by invoking \fB\fCemerge \-\-oneshot \-\-pretend [opts]\fR
-\fI<filtered-FQA-build-list-from-phase-2>\fP\&. If any differences are
+\fIfiltered\-FQA\-build\-list\-from\-phase\-2\fP\&. If any differences are
 found, report them (and, additionally, stop the build in such a
 case, if \fB\fC\-S\fR/\fB\fC\-\-strict\-crosscheck\fR specified). Also report
 a series of comparative (total elapsed wall\-clock) timings for both
 alternatives, for benchmarking purposes.
 .br
- 
+\&nbsp;
 .br
 Note: crosschecking should \fIonly\fP be used for reassurance or
 benchmarking, as it will, of necessity, be slower than the baseline
@@ -218,14 +235,23 @@ in total time cost (since the check involves running both that
 to improve emerge times, do \fInot\fP pass \fB\fC\-s\fR/\fB\fC\-S\fR\&.
 .IP "  4." 5
 Invoke the real \fB\fCemerge\fR, as: \fB\fCemerge \-\-oneshot [opts]\fR
-\fI<filtered-FQA-build-list-from-phase-2>\fP\&.
+\fIfiltered\-FQA\-build\-list\-from\-phase\-2\fP\&.
 .br
- 
+\&nbsp;
 .br
 Note that additional arguments may be passed to this invocation, both
 explicitly (via \fB\fC\-E\fR/\fB\fC\-\-emerge\-args\fR) and implicitly, via one of
 the impacting options (\fB\fC\-v\fR/\fB\fC\-\-verbose\fR, \fB\fC\-a\fR/\fB\fC\-\-ask\fR,
 \fB\fC\-A\fR/\fB\fC\-\-alert\fR, \fB\fC\-p\fR/\fB\fC\-\-pretend\fR or \fB\fC\-z\fR/\fB\fC\-\-keep\-going\fR).
+\&nbsp;
+.br
+Note also that if \fB\fC\-f\fR/\fB\fC\-\-full\-build\-fallback\-threshold\fR is used, and
+the number of packages passed to this phase is >= \fINUM\fP, then
+a dry\-run  will first be performed, to check that the proposed
+set can be emerged consistently, and iff that  fails,
+then  a  full \fB\fCemerge \-\-emptytree @world\fR run will be initiated,
+followed by (if successful)  \fB\fCemerge  \-\-depclean\fR\&.  The
+default is not to do any such dry run.
 
 .RE
 
@@ -238,7 +264,7 @@ Why is this approach faster? Well, the main claims behind \fB\fCemtee\fR are:
 An \fB\fC\-\-emptytree\fR \fB\fCemerge\fR of \fI@world\fP yields the same versioned package list
 that a \fB\fC\-\-deep \-\-update\fR \fB\fCemerge\fR would arrive at.
 .br
- 
+\&nbsp;
 .br
 That is, for \fB\fCemtee\fR to work, it must be true that for a consistent,
 depcleaned Gentoo system with a recently updated set of ebuild
@@ -247,7 +273,7 @@ invoked and runs successfully to conclusion, then an immediately
 following \fB\fCemerge \-\-with\-bdeps=y \-\-deep \-\-changed\-use \-\-update\fR
 \fI@world\fP will always be a no\-op.
 .br
- 
+\&nbsp;
 .br
 Or, to put it another way, we claim that the list of
 fully\-qualified atoms (\fIFQAs\fP, where an \fIFQA\fP is \fI$CATEGORY/$PF\fP)
@@ -260,7 +286,7 @@ as regards packages and versions, anyhow.
 It also contains sufficient information to simulate \fB\fC\-\-changed\-use\fR
 and \fB\fC\-\-newuse\fR\&.
 .br
- 
+\&nbsp;
 .br
 Of course, the issue is that in addition to new versions (\fI[N]\fP),
 package upgrades (\fI[U]\fP), downgrades (\fI[UD]\fP), new slots (\fI[NS]\fP)
@@ -269,7 +295,7 @@ huge number of reinstalls (\fI[R]\fP). Some of these will genuinely
 need doing (in light of changed USE flags etc.), but many,
 usually the vast majority, will be redundant.
 .br
- 
+\&nbsp;
 .br
 Fortunately, for common rebuild selections (such as \fB\fC\-\-changed\-use\fR
 and \fB\fC\-\-newuse\fR), we can easily identify which is which, using only
@@ -281,7 +307,7 @@ the remaining set with a \fI%\fP suffix, when \fB\fC\-\-verbose\fR is used.
 Producing such a list, and then shallow emerging it, reduces the net
 dependency calculation time.
 .br
- 
+\&nbsp;
 .br
 Finally, we also claim that for a Gentoo system with many installed
 packages, the time taken to 1) generate an \fB\fC\-\-emptytree\fR \fI@world\fP
@@ -340,12 +366,12 @@ packages requiring upgrade increases.
 
 .SH COPYRIGHT
 .PP
-Copyright © 2018\-2019 sakaki
+Copyright © 2018\-2020 sakaki
 
 .PP
 License GPLv3+ (GNU GPL version 3 or later)
 .br
-
+http://gnu.org/licenses/gpl.html
 \[la]http://gnu.org/licenses/gpl.html\[ra]
 
 .PP
@@ -355,8 +381,8 @@ There is NO WARRANTY, to the extent permitted by law.
 
 .SH AUTHOR
 .PP
-sakaki — send bug reports or comments to 
-\[la]sakaki@deciban.com\[ra]
+sakaki — send bug reports or comments to sakaki@deciban.com
+\[la]mailto:sakaki@deciban.com\[ra]
 
 .SH SEE ALSO
 .PP

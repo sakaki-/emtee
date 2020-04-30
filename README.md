@@ -1,4 +1,4 @@
-EMTEE 1 "Version 1.0.3: Nov 2019"
+EMTEE 1 "Version 1.0.4: Apr 2020"
 =================================
 
 [//]: # ( Convert to manpage using e.g. go-md2man -in=README.md -out=emtee.1 )
@@ -11,7 +11,7 @@ emtee - a faster-startup emerge -DuU --with-bdeps=y --keep-going @world (et al.)
 SYNOPSIS
 --------
 
-`emtee` [`-a`] [`-A`] [`-b`] [`-c`] [`-C`] [`-d`] [`-e` args] [`-E` args]
+`emtee` [`-a`] [`-A`] [`-b`] [`-c`] [`-C`] [`-d`] [`-e` args] [`-E` args] [`-f` NUM]
 [`-h`] [`-p`] [`-N`] [`-s` set] [`-S`] [`-v`] [`-V`] [`-z`]
 
 DESCRIPTION
@@ -87,6 +87,18 @@ OPTIONS
   Note also that you can achieve the effect of the `-a` `-A`, `-p` and `-v`
   options by setting them directly via `-E`, if you prefer. They are
   provided as syntactic sugar, for convenience.
+
+`-f`, `--full-build-fallback-threshold=`*NUM*
+  If the number of packages passed to the real emerge step
+  is >= *NUM*, then a dry-run will first be performed, to check that
+  the proposed set can be emerged consistently, and iff that
+  fails, then a full `emerge --emptytree @world`
+  run will be initiated, followed by (if successful)
+  `emerge --depclean`.  
+&nbsp;  
+  This functionality is provided as a fallback, to ensure that
+  fundamental changes that trigger many dependencies can be built
+  consistently. The default is **not** to do this dry-run test.
 
 `-h`, `--help`
   Prints a short help message, and exits.
@@ -183,6 +195,14 @@ The `emtee` process runs as follows:
    explicitly (via `-E`/`--emerge-args`) and implicitly, via one of
    the impacting options (`-v`/`--verbose`, `-a`/`--ask`,
    `-A`/`--alert`, `-p`/`--pretend` or `-z`/`--keep-going`).
+&nbsp;  
+   Note also that if `-f`/`--full-build-fallback-threshold` is used, and
+   the number of packages passed to this phase is >= *NUM*, then
+   a dry-run  will first be performed, to check that the proposed
+   set can be emerged consistently, and iff that  fails,
+   then  a  full `emerge --emptytree @world` run will be initiated,
+   followed by (if successful)  `emerge  --depclean`.  The
+   default is not to do any such dry run.
 
 BASIS
 -----
@@ -279,7 +299,7 @@ packages requiring upgrade increases.
 COPYRIGHT
 ---------
 
-Copyright © 2018-2019 sakaki
+Copyright © 2018-2020 sakaki
 
 License GPLv3+ (GNU GPL version 3 or later)  
 <http://gnu.org/licenses/gpl.html>

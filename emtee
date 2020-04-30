@@ -219,7 +219,7 @@ set -o pipefail
 # ********************** variables ********************* 
 
 PROGNAME="$(basename "${0}")"
-VERSION="1.0.3"
+VERSION="1.0.4"
 
 RED_TEXT="" GREEN_TEXT="" YELLOW_TEXT="" RESET_ATTS="" ALERT_TEXT=""
 if [[ -v TERM && -n "${TERM}" && "${TERM}" != "dumb" ]]; then
@@ -279,6 +279,10 @@ BUILD_FQAS=""                # final list of fully-qualified atoms to build, eac
 PREFIXSTRING="* "
 SHOWPREFIX="${GREEN_TEXT}${PREFIXSTRING}${RESET_ATTS}"
 SHOWSUFFIX=""
+
+# number of phase 4 builds at or above which an emerge failure will
+# trigger a full, ground-up rebuild; 0 means never do this
+declare -i FALLBACK_THRESHOLD=0
 
 # program arguments (booleans in this case)
 declare -i ARG_ASK=0 ARG_ALERT=0 ARG_HELP=0 ARG_VERSION=0
@@ -443,6 +447,13 @@ Options:
   -e, --emptytree-emerge-args=ARGS
                         pass provided additional ARGS to the initial
                         (--emptytree) emerge stage
+  -f, --full-build-fallback-threshold=NUM
+                        if there are >=NUM packages to be rebuilt at the
+                        final phase, then dry-run the oneshot emerge of
+                        these first; if this fails, run a _full_
+                        --emptytree @world emerge, followed (if successful)
+                        by emerge --depclean (the default is not to
+                        do any of these steps)
   -E, --emerge-args=ARGS
                         pass provided additional ARGS to the 'real' emerge
                         e.g., use --emerge-args='--autounmask-write' to
@@ -503,7 +514,7 @@ process_command_line_options() {
     set +e
         # error trapping temporarily off while we parse
         # so we can handle issues ourselves
-        TEMP="$(getopt -o aAb:cCde:E:hpNs:SvVz: --long ask,alert,with-bdeps:,crosscheck,strict-crosscheck,debug,emptytree-emerge-args:,emerge-args:,help,pretend,newuse,set:,force-slot-rebuilds,verbose,version,keep-going: -n "${PROGNAME}" -- "${@}")"
+        TEMP="$(getopt -o aAb:cCde:E:f:hpNs:SvVz: --long ask,alert,with-bdeps:,crosscheck,strict-crosscheck,debug,emptytree-emerge-args:,emerge-args:,full-build-fallback-threshold:,pretend,newuse,set:,force-slot-rebuilds,verbose,version,keep-going: -n "${PROGNAME}" -- "${@}")"
         RC="${?}"
     set -e
     if ((RC!=0)); then
@@ -533,6 +544,11 @@ process_command_line_options() {
                 case "${2}" in
                     "") shift 2 ;;
                     *) EMERGEARGS="${2}" ; shift 2 ;;
+                esac ;;
+            -f|--full-build-fallback-threshold)
+                case "${2}" in
+                    "") shift 2 ;;
+                    *) FALLBACK_THRESHOLD="${2}" ; shift 2 ;;
                 esac ;;
             -h|--help) ARG_HELP=1 ; shift ;;
             -p|--pretend) ARG_PRETEND=1 ; shift ;;
@@ -972,14 +988,46 @@ perform_itemized_emerge() {
     #   1. deal with blocks / uninstalls correctly
     #   2. add in slot-change rebuilds automatically, and
     #   3. permit job parallelism (where enabled via EMERGE_DEFAULT_OPTS)
+    #
+    # if --full-build-fallback-threshold=N / -f N is set, and >=N FQAs are carried
+    # forward into this phase 4, then the emerge will first be
+    # dry-run, and if that _fails_ (indicating usually a stubborn
+    # blocker caused by e.g. a slot change in a low-level library with
+    # lots of deps) then a _full_ emptytree @world emerge will be
+    # triggered instead; this provides a failsafe for most
+    # cases
+    #
+    # also, if --extreme / -x is set, then emerge --depclean will be
+    # run at the (successful) conclusion of the emerge, to leave
+    # the system in a consistent state
+
+    declare -i TRY_STANDARD_EMERGE=1
 
     if ((NUM_TO_BUILD>0)); then
-        if ((ARG_DEBUG==1)); then
-            show "Issuing:"
-            echo "  emerge --oneshot ${ASKFLAG} ${ALERTFLAG} ${VERBOSITYFLAG} ${PRETENDFLAG} --keep-going=${KEEP_GOING_FLAG} ${EMERGEARGS} ${BUILD_FQAS}"
+        if ((FALLBACK_THRESHOLD>0 && NUM_TO_BUILD>=FALLBACK_THRESHOLD)); then
+            show "Fallback threshold met, validating phase 4 build list..."
+            show "(this may take some time)"
+            if emerge --oneshot --pretend ${EMERGEARGS} ${BUILD_FQAS} &>/dev/null; then
+                show "Build list validated!"
+            else
+                warning "NOT valid; initiating full --emptytree @world emerge"
+                # fallback
+                TRY_STANDARD_EMERGE=0
+                emerge ${ASKFLAG} ${ALERTFLAG} ${VERBOSITYFLAG} ${PRETENDFLAG} \
+                       --emptytree @world
+                show "Full emerge successful!"
+                show "Removing packages not required by @world set..."
+                emerge ${ASKFLAG} ${ALERTFLAG} ${VERBOSITYFLAG} ${PRETENDFLAG} --depclean
+            fi
         fi
-        emerge --oneshot ${ASKFLAG} ${ALERTFLAG} ${VERBOSITYFLAG} ${PRETENDFLAG} \
-               --keep-going=${KEEP_GOING_FLAG} ${EMERGEARGS} ${BUILD_FQAS}
+        if ((TRY_STANDARD_EMERGE==1)); then
+            if ((ARG_DEBUG==1)); then
+                show "Issuing:"
+                echo "  emerge --oneshot ${ASKFLAG} ${ALERTFLAG} ${VERBOSITYFLAG} ${PRETENDFLAG} --keep-going=${KEEP_GOING_FLAG} ${EMERGEARGS} ${BUILD_FQAS}"
+            fi
+            emerge --oneshot ${ASKFLAG} ${ALERTFLAG} ${VERBOSITYFLAG} ${PRETENDFLAG} \
+                   --keep-going=${KEEP_GOING_FLAG} ${EMERGEARGS} ${BUILD_FQAS}
+        fi
     else
         show "Nothing to emerge!"
     fi
