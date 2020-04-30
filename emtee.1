@@ -1,5 +1,5 @@
 .nh
-.TH EMTEE 1 "Version 1.0.4: Apr 2020"
+.TH EMTEE 1 "Version 1.0.5: Apr 2020"
 .SH NAME
 .PP
 emtee \- a faster\-startup emerge \-DuU \-\-with\-bdeps=y \-\-keep\-going @world (et al.)
@@ -182,7 +182,7 @@ Filter this list, by marking each fully\-qualified atom
 (\fIFQA\fP=\fI$CATEGORY/$PF\fP) within it for building (or not). Begin
 with all \fIFQAs\fP unmarked.
 .br
-\&nbsp;
+
 .br
 
 .RS
@@ -205,7 +205,7 @@ dependencies.  Mark each such located (reverse) dependency that
 is \fIalso\fP on the original \fB\fC\-\-emptytree\fR list (and not a block
 or uninstall) for build.
 .br
-\&nbsp;
+
 .br
 Note that pass 3 is skipped by default, since the phase 4 emerge
 (aka the real \fB\fCemerge\fR) will automatically trigger any
@@ -226,7 +226,7 @@ case, if \fB\fC\-S\fR/\fB\fC\-\-strict\-crosscheck\fR specified). Also report
 a series of comparative (total elapsed wall\-clock) timings for both
 alternatives, for benchmarking purposes.
 .br
-\&nbsp;
+
 .br
 Note: crosschecking should \fIonly\fP be used for reassurance or
 benchmarking, as it will, of necessity, be slower than the baseline
@@ -237,13 +237,13 @@ to improve emerge times, do \fInot\fP pass \fB\fC\-s\fR/\fB\fC\-S\fR\&.
 Invoke the real \fB\fCemerge\fR, as: \fB\fCemerge \-\-oneshot [opts]\fR
 \fIfiltered\-FQA\-build\-list\-from\-phase\-2\fP\&.
 .br
-\&nbsp;
+
 .br
 Note that additional arguments may be passed to this invocation, both
 explicitly (via \fB\fC\-E\fR/\fB\fC\-\-emerge\-args\fR) and implicitly, via one of
 the impacting options (\fB\fC\-v\fR/\fB\fC\-\-verbose\fR, \fB\fC\-a\fR/\fB\fC\-\-ask\fR,
 \fB\fC\-A\fR/\fB\fC\-\-alert\fR, \fB\fC\-p\fR/\fB\fC\-\-pretend\fR or \fB\fC\-z\fR/\fB\fC\-\-keep\-going\fR).
-\&nbsp;
+
 .br
 Note also that if \fB\fC\-f\fR/\fB\fC\-\-full\-build\-fallback\-threshold\fR is used, and
 the number of packages passed to this phase is >= \fINUM\fP, then
@@ -264,7 +264,7 @@ Why is this approach faster? Well, the main claims behind \fB\fCemtee\fR are:
 An \fB\fC\-\-emptytree\fR \fB\fCemerge\fR of \fI@world\fP yields the same versioned package list
 that a \fB\fC\-\-deep \-\-update\fR \fB\fCemerge\fR would arrive at.
 .br
-\&nbsp;
+
 .br
 That is, for \fB\fCemtee\fR to work, it must be true that for a consistent,
 depcleaned Gentoo system with a recently updated set of ebuild
@@ -273,7 +273,7 @@ invoked and runs successfully to conclusion, then an immediately
 following \fB\fCemerge \-\-with\-bdeps=y \-\-deep \-\-changed\-use \-\-update\fR
 \fI@world\fP will always be a no\-op.
 .br
-\&nbsp;
+
 .br
 Or, to put it another way, we claim that the list of
 fully\-qualified atoms (\fIFQAs\fP, where an \fIFQA\fP is \fI$CATEGORY/$PF\fP)
@@ -286,7 +286,7 @@ as regards packages and versions, anyhow.
 It also contains sufficient information to simulate \fB\fC\-\-changed\-use\fR
 and \fB\fC\-\-newuse\fR\&.
 .br
-\&nbsp;
+
 .br
 Of course, the issue is that in addition to new versions (\fI[N]\fP),
 package upgrades (\fI[U]\fP), downgrades (\fI[UD]\fP), new slots (\fI[NS]\fP)
@@ -295,7 +295,7 @@ huge number of reinstalls (\fI[R]\fP). Some of these will genuinely
 need doing (in light of changed USE flags etc.), but many,
 usually the vast majority, will be redundant.
 .br
-\&nbsp;
+
 .br
 Fortunately, for common rebuild selections (such as \fB\fC\-\-changed\-use\fR
 and \fB\fC\-\-newuse\fR), we can easily identify which is which, using only
@@ -307,7 +307,7 @@ the remaining set with a \fI%\fP suffix, when \fB\fC\-\-verbose\fR is used.
 Producing such a list, and then shallow emerging it, reduces the net
 dependency calculation time.
 .br
-\&nbsp;
+
 .br
 Finally, we also claim that for a Gentoo system with many installed
 packages, the time taken to 1) generate an \fB\fC\-\-emptytree\fR \fI@world\fP

@@ -193,7 +193,7 @@
 # AUTHOR
 # ------
 #
-# Copyright (c) 2018-2019 sakaki <sakaki@deciban.com>
+# Copyright (c) 2018-2020 sakaki <sakaki@deciban.com>
 #
 # License (GPL v3.0)
 # ------------------
@@ -219,7 +219,7 @@ set -o pipefail
 # ********************** variables ********************* 
 
 PROGNAME="$(basename "${0}")"
-VERSION="1.0.4"
+VERSION="1.0.5"
 
 RED_TEXT="" GREEN_TEXT="" YELLOW_TEXT="" RESET_ATTS="" ALERT_TEXT=""
 if [[ -v TERM && -n "${TERM}" && "${TERM}" != "dumb" ]]; then
@@ -283,6 +283,7 @@ SHOWSUFFIX=""
 # number of phase 4 builds at or above which an emerge failure will
 # trigger a full, ground-up rebuild; 0 means never do this
 declare -i FALLBACK_THRESHOLD=0
+FALLBACK_SENTINEL="/tmp/.full-emptytree-emerge-performed"
 
 # program arguments (booleans in this case)
 declare -i ARG_ASK=0 ARG_ALERT=0 ARG_HELP=0 ARG_VERSION=0
@@ -1018,6 +1019,8 @@ perform_itemized_emerge() {
                 show "Full emerge successful!"
                 show "Removing packages not required by @world set..."
                 emerge ${ASKFLAG} ${ALERTFLAG} ${VERBOSITYFLAG} ${PRETENDFLAG} --depclean
+                # write a sentinel to show other programs (e.g. genup) that we got here
+                touch "${FALLBACK_SENTINEL}"
             fi
         fi
         if ((TRY_STANDARD_EMERGE==1)); then
@@ -1036,8 +1039,13 @@ perform_itemized_emerge() {
     show "Phase completed in $((EMERGE_ELAPSED_SECS))s"
     show
 }
+remove_fallback_sentinel() {
+    # remove marker that successful full emerge has taken place
+    rm -f "${FALLBACK_SENTINEL}"
+}
 
 # *************** start of script proper ***************
+remove_fallback_sentinel
 suppress_colour_and_alert_if_output_not_to_a_terminal
 process_command_line_options "${@}"
 display_greeting
